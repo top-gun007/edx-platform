@@ -1,5 +1,5 @@
 import * as constants from 'edx-ui-toolkit/src/js/utils/constants';
-import * as Logger from logger;
+import log from 'logger';
 
 export class CourseOutline {
   constructor(root) {
@@ -20,7 +20,7 @@ export class CourseOutline {
     });
 
     document.querySelectorAll('a:not([href^="#"])').addEventListener('click', (event) => {
-        Logger.log(
+        log(
             'edx.ui.lms.link_clicked',
             {
                 current_url: window.location.href,
