@@ -42,6 +42,8 @@ var _ = require('underscore');
 var appRoot = path.join(__dirname, '../../../../');
 var webpackConfig = require(path.join(appRoot, 'webpack.config.js'));
 
+delete webpackConfig.entry;
+
 // Files which are needed by all lms/cms suites.
 var commonFiles = {
     libraryFiles: [
@@ -178,13 +180,15 @@ var defaultNormalizeFunc = function(appRoot, pattern) {
     return pattern;
 };
 
-var normalizePathsForCoverage = function(files, normalizeFunc) {
+var normalizePathsForCoverage = function(files, normalizeFunc, preprocessors) {
     var normalizeFn = normalizeFunc || defaultNormalizeFunc,
+        normalizedFile,
         filesForCoverage = {};
 
     files.forEach(function(file) {
         if (!file.ignoreCoverage) {
-            filesForCoverage[normalizeFn(appRoot, file.pattern)] = ['coverage'];
+            normalizedFile = normalizeFn(appRoot, file.pattern);
+            filesForCoverage[normalizedFile] = ['coverage'].concat(preprocessors[normalizedFile] || []);
         }
     });
 
@@ -199,7 +203,7 @@ var normalizePathsForCoverage = function(files, normalizeFunc) {
  */
 var setNocache = function(files, enable) {
     files.forEach(function(f) {
-        if (_.isObject(f)) {
+        if (_.isObject(f) && !f.webpack) {
             f.nocache = enable;
         }
     });
@@ -208,13 +212,15 @@ var setNocache = function(files, enable) {
 
 /**
  * Sets defaults for each file pattern.
+ * RequireJS files are excluded by default.
+ * Webpack filess are included by default.
  * @param {Object} files
  * @return {Object}
  */
 var setDefaults = function(files) {
     return files.map(function(f) {
         var file = _.isObject(f) ? f : {pattern: f};
-        if (!file.included) {
+        if (!file.included && !file.webpack) {
             f.included = false;
         }
         return file;
@@ -352,7 +358,9 @@ var getBaseConfig = function(config, useRequireJs) {
 
         client: {
             captureConsole: false
-        }
+        },
+
+        webpack: webpackConfig
     };
 };
 
@@ -402,13 +410,12 @@ var configure = function(config, options) {
     var preprocessors = _.extend(
         {},
         options.preprocessors,
-        normalizePathsForCoverage(filesForCoverage, options.normalizePathsForCoverageFunc)
+        normalizePathsForCoverage(filesForCoverage, options.normalizePathsForCoverageFunc, options.preprocessors)
     );
 
     config.set(_.extend(baseConfig, {
         files: files,
-        preprocessors: preprocessors,
-        webpack: webpackConfig
+        preprocessors: preprocessors
     }));
 };
 

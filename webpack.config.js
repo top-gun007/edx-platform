@@ -12,9 +12,9 @@ const wpconfig = {
   },
 
   output: {
-      path: path.resolve(__dirname, 'common/static/bundles'),
-      filename: '[name]-[hash].js',
-      libraryTarget: 'window',
+    path: path.resolve(__dirname, 'common/static/bundles'),
+    filename: '[name]-[hash].js',
+    libraryTarget: 'window',
   },
 
   devtool: isProd ? false : 'cheap-eval-source-map',
