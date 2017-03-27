@@ -48,16 +48,16 @@ def program_listing(request):
 def program_details(request, program_uuid):
     """View details about a specific program."""
     programs_config = ProgramsApiConfig.current()
-    if not programs_config.enabled:
-        raise Http404
+    # if not programs_config.enabled:
+    #     raise Http404
 
-    meter = ProgramProgressMeter(request.user, uuid=program_uuid)
-    program_data = meter.programs[0]
+    # meter = ProgramProgressMeter(request.user, uuid=program_uuid)
+    # program_data = meter.programs[0]
 
-    if not program_data:
-        raise Http404
+    # if not program_data:
+        # raise Http404
 
-    program_data = ProgramDataExtender(program_data, request.user).extend()
+    # program_data = ProgramDataExtender(program_data, request.user).extend()
 
     urls = {
         'program_listing_url': reverse('program_listing_view'),
