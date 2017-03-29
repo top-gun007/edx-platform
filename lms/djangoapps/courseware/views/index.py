@@ -5,7 +5,6 @@ View for Courseware Index
 from datetime import datetime
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.core.context_processors import csrf
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -14,9 +13,7 @@ from django.utils.timezone import UTC
 from django.views.decorators.cache import cache_control
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import View
-from django.shortcuts import redirect
 
-from courseware.url_helpers import get_redirect_url_for_global_staff
 from edxmako.shortcuts import render_to_response, render_to_string
 import logging
 
@@ -33,14 +30,9 @@ from openedx.core.djangoapps.crawlers.models import CrawlersConfig
 from openedx.core.djangoapps.monitoring_utils import set_custom_metrics_for_course_key
 from openedx.features.enterprise_support.api import data_sharing_consent_required
 from request_cache.middleware import RequestCache
-from shoppingcart.models import CourseRegistrationCode
-from student.models import CourseEnrollment
-from student.views import is_course_blocked
-from student.roles import GlobalStaff
 from util.views import ensure_valid_course_key
 from xmodule.modulestore.django import modulestore
 from xmodule.x_module import STUDENT_VIEW
-from survey.utils import must_answer_survey
 from web_fragments.fragment import Fragment
 
 from ..access import has_access, _adjust_start_date_for_beta_testers
@@ -52,7 +44,6 @@ from ..entrance_exams import (
     user_has_passed_entrance_exam,
     user_can_skip_entrance_exam,
 )
-from ..exceptions import Redirect
 from ..masquerade import setup_masquerade
 from ..model_data import FieldDataCache
 from ..module_render import toc_for_course, get_module_for_descriptor
@@ -109,8 +100,6 @@ class CoursewareIndex(View):
                 self.is_staff = has_access(request.user, 'staff', self.course)
                 self._setup_masquerade_for_effective_user()
                 return self._get(request)
-        except Redirect as redirect_error:
-            return redirect(redirect_error.url)
         except UnicodeEncodeError:
             raise Http404("URL contains Unicode characters")
         except Http404:
@@ -138,7 +127,6 @@ class CoursewareIndex(View):
         """
         Render the index page.
         """
-        self._redirect_if_needed_to_access_course()
         self._prefetch_and_bind_course(request)
 
         if self.course.has_children_at_depth(CONTENT_DEPTH):
@@ -147,33 +135,11 @@ class CoursewareIndex(View):
             self.section = self._find_section()
 
             if self.chapter and self.section:
-                self._redirect_if_not_requested_section()
                 self._save_positions()
                 self._prefetch_and_bind_section()
 
         return render_to_response('courseware/courseware.html', self._create_courseware_context())
 
-    def _redirect_if_not_requested_section(self):
-        """
-        If the resulting section and chapter are different from what was initially
-        requested, redirect back to the index page, but with an updated URL that includes
-        the correct section and chapter values.  We do this so that our analytics events
-        and error logs have the appropriate URLs.
-        """
-        if (
-                self.chapter.url_name != self.original_chapter_url_name or
-                (self.original_section_url_name and self.section.url_name != self.original_section_url_name)
-        ):
-            raise Redirect(
-                reverse(
-                    'courseware_section',
-                    kwargs={
-                        'course_id': unicode(self.course_key),
-                        'chapter': self.chapter.url_name,
-                        'section': self.section.url_name,
-                    },
-                )
-            )
 
     def _clean_position(self):
         """
@@ -184,75 +150,6 @@ class CoursewareIndex(View):
                 self.position = max(int(self.position), 1)
             except ValueError:
                 raise Http404(u"Position {} is not an integer!".format(self.position))
-
-    def _redirect_if_needed_to_access_course(self):
-        """
-        Verifies that the user can enter the course.
-        """
-        self._redirect_if_needed_to_pay_for_course()
-        self._redirect_if_needed_to_register()
-        self._redirect_if_needed_for_prereqs()
-        self._redirect_if_needed_for_course_survey()
-
-    def _redirect_if_needed_to_pay_for_course(self):
-        """
-        Redirect to dashboard if the course is blocked due to non-payment.
-        """
-        self.real_user = User.objects.prefetch_related("groups").get(id=self.real_user.id)
-        redeemed_registration_codes = CourseRegistrationCode.objects.filter(
-            course_id=self.course_key,
-            registrationcoderedemption__redeemed_by=self.real_user
-        )
-        if is_course_blocked(self.request, redeemed_registration_codes, self.course_key):
-            # registration codes may be generated via Bulk Purchase Scenario
-            # we have to check only for the invoice generated registration codes
-            # that their invoice is valid or not
-            log.warning(
-                u'User %s cannot access the course %s because payment has not yet been received',
-                self.real_user,
-                unicode(self.course_key),
-            )
-            raise Redirect(reverse('dashboard'))
-
-    def _redirect_if_needed_to_register(self):
-        """
-        Verify that the user is registered in the course.
-        """
-        if not registered_for_course(self.course, self.effective_user):
-            log.debug(
-                u'User %s tried to view course %s but is not enrolled',
-                self.effective_user,
-                unicode(self.course.id)
-            )
-            user_is_global_staff = GlobalStaff().has_user(self.effective_user)
-            user_is_enrolled = CourseEnrollment.is_enrolled(self.effective_user, self.course_key)
-            if user_is_global_staff and not user_is_enrolled:
-                redirect_url = get_redirect_url_for_global_staff(self.course_key, _next=self.url)
-                raise Redirect(redirect_url)
-            raise Redirect(reverse('about_course', args=[unicode(self.course.id)]))
-
-    def _redirect_if_needed_for_prereqs(self):
-        """
-        See if all pre-requisites (as per the milestones app feature) have been
-        fulfilled. Note that if the pre-requisite feature flag has been turned off
-        (default) then this check will always pass.
-        """
-        if not has_access(self.effective_user, 'view_courseware_with_prerequisites', self.course):
-            # Prerequisites have not been fulfilled.
-            # Therefore redirect to the Dashboard.
-            log.info(
-                u'User %d tried to view course %s '
-                u'without fulfilling prerequisites',
-                self.effective_user.id, unicode(self.course.id))
-            raise Redirect(reverse('dashboard'))
-
-    def _redirect_if_needed_for_course_survey(self):
-        """
-        Check to see if there is a required survey that must be taken before
-        the user can access the course.
-        """
-        if must_answer_survey(self.course, self.effective_user):
-            raise Redirect(reverse('course_survey', args=[unicode(self.course.id)]))
 
     def _reset_section_to_exam_if_required(self):
         """
