@@ -624,6 +624,8 @@ def dashboard(request):
 
     """
     user = request.user
+    if not UserProfile.objects.filter(user=user).exists():
+        return redirect(reverse('account_settings'))
 
     platform_name = configuration_helpers.get_value("platform_name", settings.PLATFORM_NAME)
     enable_verified_certificates = configuration_helpers.get_value(

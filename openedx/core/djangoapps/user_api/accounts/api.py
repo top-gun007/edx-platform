@@ -246,7 +246,7 @@ def _get_user_and_profile(username):
     """
     try:
         existing_user = User.objects.get(username=username)
-        existing_user_profile = UserProfile.objects.get(user=existing_user)
+        existing_user_profile, _ = UserProfile.objects.get_or_create(user=existing_user)
     except ObjectDoesNotExist:
         raise UserNotFound()
 

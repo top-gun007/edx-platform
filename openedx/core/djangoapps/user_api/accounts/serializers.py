@@ -1,9 +1,12 @@
 """
 Django REST Framework serializers for the User API Accounts sub-application
 """
+import logging
+
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 
 from lms.djangoapps.badges.utils import badges_enabled
@@ -18,6 +21,7 @@ from .image_helpers import get_profile_image_urls_for_user
 
 
 PROFILE_IMAGE_KEY_PREFIX = 'image_url'
+LOGGER = logging.getLogger(__name__)
 
 
 class LanguageProficiencySerializer(serializers.ModelSerializer):
@@ -63,7 +67,12 @@ class UserReadOnlySerializer(serializers.Serializer):
         :param user: User object
         :return: Dict serialized account
         """
-        profile = user.profile
+        try:
+            profile = user.profile
+        except ObjectDoesNotExist:
+            profile = None
+            LOGGER.warning("user profile for the user [%s] does not exist", user.username)
+
         accomplishments_shared = badges_enabled()
 
         data = {
@@ -78,32 +87,52 @@ class UserReadOnlySerializer(serializers.Serializer):
             # https://docs.djangoproject.com/en/1.8/ref/databases/#fractional-seconds-support-for-time-and-datetime-fields
             "date_joined": user.date_joined.replace(microsecond=0),
             "is_active": user.is_active,
-            "bio": AccountLegacyProfileSerializer.convert_empty_to_None(profile.bio),
-            "country": AccountLegacyProfileSerializer.convert_empty_to_None(profile.country.code),
-            "profile_image": AccountLegacyProfileSerializer.get_profile_image(
-                profile,
-                user,
-                self.context.get('request')
-            ),
-            "language_proficiencies": LanguageProficiencySerializer(
-                profile.language_proficiencies.all(),
-                many=True
-            ).data,
-            "name": profile.name,
-            "gender": AccountLegacyProfileSerializer.convert_empty_to_None(profile.gender),
-            "goals": profile.goals,
-            "year_of_birth": profile.year_of_birth,
-            "level_of_education": AccountLegacyProfileSerializer.convert_empty_to_None(profile.level_of_education),
-            "mailing_address": profile.mailing_address,
-            "requires_parental_consent": profile.requires_parental_consent(),
+            "bio": None,
+            "country": None,
+            "profile_image": None,
+            "language_proficiencies": None,
+            "name": profile.name if profile else None,
+            "gender": None,
+            "goals": None,
+            "year_of_birth": None,
+            "level_of_education": None,
+            "mailing_address": None,
+            "requires_parental_consent": None,
             "accomplishments_shared": accomplishments_shared,
-            "account_privacy": get_profile_visibility(profile, user, self.configuration),
+            "account_privacy": self.configuration.get('default_visibility')
         }
+
+        if profile:
+            data.update(
+                {
+                    "bio": AccountLegacyProfileSerializer.convert_empty_to_None(profile.bio),
+                    "country": AccountLegacyProfileSerializer.convert_empty_to_None(profile.country.code),
+                    "profile_image": AccountLegacyProfileSerializer.get_profile_image(
+                        profile, user, self.context.get('request')
+                    ),
+                    "language_proficiencies": LanguageProficiencySerializer(
+                        profile.language_proficiencies.all(), many=True
+                    ).data,
+                    "name": profile.name,
+                    "gender": AccountLegacyProfileSerializer.convert_empty_to_None(profile.gender),
+                    "goals": profile.goals,
+                    "year_of_birth": profile.year_of_birth,
+                    "level_of_education": AccountLegacyProfileSerializer.convert_empty_to_None(
+                        profile.level_of_education
+                    ),
+                    "mailing_address": profile.mailing_address,
+                    "requires_parental_consent": profile.requires_parental_consent(),
+                    "account_privacy": get_profile_visibility(profile, user, self.configuration)
+                }
+            )
 
         if self.custom_fields:
             fields = self.custom_fields
         else:
-            fields = _visible_fields(profile, user, self.configuration)
+            if profile:
+                fields = _visible_fields(profile, user, self.configuration)
+            else:
+                fields = self.configuration.get('public_fields')
 
         return self._filter_fields(
             fields,
