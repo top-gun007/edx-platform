@@ -19,7 +19,8 @@ define([
                     name: 'Configuration 1',
                     courseOutlineUrl: 'CourseOutlineUrl'
                 }),
-                contentGroupConfiguration: new GroupConfigurationModel({groups: []})
+                contentGroupConfiguration: new GroupConfigurationModel({groups: []}),
+                enrollmentTrackConfiguration: new GroupConfigurationModel({groups: []})
             });
 
             if (!disableSpy) {

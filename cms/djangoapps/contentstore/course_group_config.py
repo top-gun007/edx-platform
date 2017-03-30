@@ -17,6 +17,7 @@ MINIMUM_GROUP_ID = MINIMUM_STATIC_PARTITION_ID
 
 RANDOM_SCHEME = "random"
 COHORT_SCHEME = "cohort"
+ENROLLMENT_SCHEME = "enrollment_track"
 
 CONTENT_GROUP_CONFIGURATION_DESCRIPTION = _(
     'The groups in this configuration can be mapped to cohorts in the Instructor Dashboard.'
@@ -200,8 +201,6 @@ class GroupConfiguration(object):
         """
         Returns all units names and their urls.
 
-        This will return only groups for the cohort user partition.
-
         Returns:
         {'group_id':
             [
@@ -286,18 +285,19 @@ class GroupConfiguration(object):
         """
         Iterate through items and content group IDs in a course.
 
-        This will yield group IDs *only* for cohort user partitions.
+        This will yield group IDs for all user partitions.
 
         Yields: tuple of (item, group_id)
         """
-        content_group_configuration = get_cohorted_user_partition(course)
-        if content_group_configuration is not None:
-            for item in items:
-                if hasattr(item, 'group_access') and item.group_access:
-                    group_ids = item.group_access.get(content_group_configuration.id, [])
+        all_configurations = get_all_partitions_for_course(course)
+        for config in all_configurations:
+            if config is not None and config.scheme.name != RANDOM_SCHEME:
+                for item in items:
+                    if hasattr(item, 'group_access') and item.group_access:
+                        group_ids = item.group_access.get(config.id, [])
 
-                    for group_id in group_ids:
-                        yield item, group_id
+                        for group_id in group_ids:
+                            yield item, group_id
 
     @staticmethod
     def update_usage_info(store, course, configuration):
@@ -337,29 +337,58 @@ class GroupConfiguration(object):
 
         return content_group_configuration
 
-    @staticmethod
-    def get_or_create_content_group(store, course):
-        """
-        Returns the first user partition from the course which uses the
-        CohortPartitionScheme, or generates one if no such partition is
-        found.  The created partition is not saved to the course until
-        the client explicitly creates a group within the partition and
-        POSTs back.
-        """
-        content_group_configuration = get_cohorted_user_partition(course)
-        if content_group_configuration is None:
-            content_group_configuration = UserPartition(
-                id=generate_int_id(MINIMUM_GROUP_ID, MYSQL_MAX_INT, GroupConfiguration.get_used_ids(course)),
-                name=CONTENT_GROUP_CONFIGURATION_NAME,
-                description=CONTENT_GROUP_CONFIGURATION_DESCRIPTION,
-                groups=[],
-                scheme_id=COHORT_SCHEME
-            )
-            return content_group_configuration.to_json()
+    # @staticmethod
+    # def update_all_partition_group_usage_info(store, course, configuration):
+        # usage_info = GroupConfiguration.
 
-        content_group_configuration = GroupConfiguration.update_content_group_usage_info(
-            store,
-            course,
-            content_group_configuration
+    # TODO: Delete this code once removed from all dependent tests (astaubin)
+    # @staticmethod
+    # def get_or_create_content_group(store, course):
+    #     """
+    #     Returns the first user partition from the course which uses the
+    #     CohortPartitionScheme, or generates one if no such partition is
+    #     found.  The created partition is not saved to the course until
+    #     the client explicitly creates a group within the partition and
+    #     POSTs back.
+    #     """
+    #     content_group_configuration = get_cohorted_user_partition(course)
+    #     if content_group_configuration is None:
+    #         content_group_configuration = UserPartition(
+    #             id=generate_int_id(MINIMUM_GROUP_ID, MYSQL_MAX_INT, GroupConfiguration.get_used_ids(course)),
+    #             name=CONTENT_GROUP_CONFIGURATION_NAME,
+    #             description=CONTENT_GROUP_CONFIGURATION_DESCRIPTION,
+    #             groups=[],
+    #             scheme_id=COHORT_SCHEME
+    #         )
+    #         return content_group_configuration.to_json()
+    #
+    #     content_group_configuration = GroupConfiguration.update_content_group_usage_info(
+    #         store,
+    #         course,
+    #         content_group_configuration
+    #     )
+    #     return content_group_configuration
+
+    @staticmethod
+    def get_empty_user_partition(course, scheme):
+        content_group_configuration = UserPartition(
+            id=generate_int_id(MINIMUM_GROUP_ID, MYSQL_MAX_INT, GroupConfiguration.get_used_ids(course)),
+            name=CONTENT_GROUP_CONFIGURATION_NAME,
+            description=CONTENT_GROUP_CONFIGURATION_DESCRIPTION,
+            groups=[],
+            scheme_id=scheme
         )
-        return content_group_configuration
+        return content_group_configuration.to_json()
+
+    @staticmethod
+    def get_all_content_groups(store, course):
+        all_partitions = get_all_partitions_for_course(course)
+        all_configurations = []
+        for partition in all_partitions:
+            configuration = GroupConfiguration.update_content_group_usage_info(
+                store,
+                course,
+                partition
+            )
+            all_configurations.append(configuration)
+        return all_configurations

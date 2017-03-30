@@ -30,6 +30,7 @@ from .library import LIBRARIES_ENABLED, get_library_creator_status
 from ccx_keys.locator import CCXLocator
 from contentstore.course_group_config import (
     COHORT_SCHEME,
+    ENROLLMENT_SCHEME,
     GroupConfiguration,
     GroupConfigurationsValidationError,
     RANDOM_SCHEME,
@@ -98,7 +99,6 @@ from xmodule.modulestore import EdxJSONEncoder
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.exceptions import ItemNotFoundError, DuplicateCourseError
 from xmodule.tabs import CourseTab, CourseTabList, InvalidTabsException
-
 
 log = logging.getLogger(__name__)
 
@@ -1521,7 +1521,17 @@ def group_configurations_list_handler(request, course_key_string):
             else:
                 experiment_group_configurations = None
 
-            content_group_configuration = GroupConfiguration.get_or_create_content_group(store, course)
+            all_configurations = GroupConfiguration.get_all_content_groups(store, course)
+            content_group_configuration = GroupConfiguration.get_empty_user_partition(course, COHORT_SCHEME)
+            enrollment_track_configuration = {}
+            should_show_enrollment_track = False
+
+            for config in all_configurations:
+                if config['scheme'] == 'cohort':
+                    content_group_configuration = config
+                elif config['scheme'] == 'enrollment_track':
+                    enrollment_track_configuration = config
+                    should_show_enrollment_track = len(enrollment_track_configuration['groups']) > 1
 
             return render_to_response('group_configurations.html', {
                 'context_course': course,
@@ -1529,7 +1539,9 @@ def group_configurations_list_handler(request, course_key_string):
                 'course_outline_url': course_outline_url,
                 'experiment_group_configurations': experiment_group_configurations,
                 'should_show_experiment_groups': should_show_experiment_groups,
-                'content_group_configuration': content_group_configuration
+                'content_group_configuration': content_group_configuration,
+                'enrollment_track_configuration': enrollment_track_configuration,
+                'should_show_enrollment_track': should_show_enrollment_track
             })
         elif "application/json" in request.META.get('HTTP_ACCEPT'):
             if request.method == 'POST':

@@ -22,6 +22,8 @@ define([
 
         itemDisplayName: gettext('content group'),
 
+        restrictEditing: false,
+
         attributes: function() {
             return {
                 'id': this.model.get('id'),
@@ -34,7 +36,7 @@ define([
         },
 
         createDetailsView: function() {
-            return new ContentGroupDetailsView({model: this.model});
+            return new ContentGroupDetailsView({model: this.model, restrictEditing: this.restrictEditing});
         }
     });
 

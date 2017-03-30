@@ -32,6 +32,7 @@ define([
 
         initialize: function() {
             this.template = this.loadTemplate('content-group-details');
+            this.restrictEditing = this.options.restrictEditing;
             this.listenTo(this.model, 'change', this.render);
         },
 
@@ -41,7 +42,8 @@ define([
                 courseOutlineUrl: this.model.collection.parents[0].outlineUrl,
                 index: this.model.collection.indexOf(this.model),
                 showContentGroupUsages: showContentGroupUsages || false,
-                HtmlUtils: HtmlUtils
+                HtmlUtils: HtmlUtils,
+                restrictEditing: this.restrictEditing || false
             });
             this.$el.html(this.template(attrs));
             return this;

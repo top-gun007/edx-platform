@@ -19,9 +19,12 @@ define([
 
         emptyMessage: gettext('You have not created any content groups yet.'),
 
+        restrictEditing: false,
+
         createItemView: function(options) {
             return new ContentGroupItemView(options);
         }
+
     });
 
     return ContentGroupListView;

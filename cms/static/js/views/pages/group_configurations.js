@@ -14,10 +14,19 @@ function($, _, gettext, BasePage, GroupConfigurationsListView, ContentGroupListV
                     collection: this.experimentGroupConfigurations
                 });
             }
+
             this.contentGroupConfiguration = options.contentGroupConfiguration;
             this.cohortGroupsListView = new ContentGroupListView({
                 collection: this.contentGroupConfiguration.get('groups')
             });
+
+            this.enrollmentTrackConfiguration = options.enrollmentTrackConfiguration;
+            if (this.enrollmentTrackConfiguration.get('groups').length > 1) {
+                this.enrollmentGroupListView = new ContentGroupListView({
+                    collection: this.enrollmentTrackConfiguration.get('groups'),
+                    restrictEditing: true
+                });
+            }
         },
 
         renderPage: function() {
@@ -26,6 +35,10 @@ function($, _, gettext, BasePage, GroupConfigurationsListView, ContentGroupListV
                 this.$('.wrapper-groups.experiment-groups').append(this.experimentGroupsListView.render().el);
             }
             this.$('.wrapper-groups.content-groups').append(this.cohortGroupsListView.render().el);
+            if (this.enrollmentTrackConfiguration.get('groups').length > 1) {
+                this.$('.wrapper-groups.enrollment-tracks').append(this.enrollmentGroupListView.render().el);
+            }
+
             this.addWindowActions();
             if (hash) {
                 // Strip leading '#' to get id string to match

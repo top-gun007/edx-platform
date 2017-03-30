@@ -53,10 +53,9 @@ class EnrollmentTrackUserPartitionTest(SharedModuleStoreTestCase):
         self.assertIsNotNone(self.get_group_by_name(partition, "Verified Enrollment Track"))
         self.assertIsNotNone(self.get_group_by_name(partition, "Credit Mode"))
 
-    def test_to_json_not_supported(self):
+    def test_to_json_supported(self):
         user_partition = create_enrollment_track_partition(self.course)
-        with self.assertRaises(TypeError):
-            user_partition.to_json()
+        self.assertIsNotNone(user_partition.to_json())
 
     def test_from_json_not_supported(self):
         with self.assertRaises(TypeError):
