@@ -24,9 +24,10 @@ class ScoreBase(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, graded, attempted):
+    def __init__(self, graded, attempted, first_attempted=None):
         self.graded = graded
         self.attempted = attempted
+        self.first_attempted = first_attempted
 
     def __eq__(self, other):
         if type(other) is type(self):
@@ -81,25 +82,58 @@ def float_sum(iterable):
 
 def aggregate_scores(scores):
     """
-    scores: A list of ScoreBase objects
+    scores: A list of ProblemScore objects
     returns: A tuple (all_total, graded_total).
-        all_total: A ScoreBase representing the total score summed over all input scores
-        graded_total: A ScoreBase representing the score summed over all graded input scores
+        all_total: An AggregatedScore representing the total score summed over all input scores
+        graded_total: An AggregatedScore representing the score summed over all graded input scores
     """
-    total_correct_graded = float_sum(score.earned for score in scores if score.graded)
-    total_possible_graded = float_sum(score.possible for score in scores if score.graded)
-    any_attempted_graded = any(score.attempted for score in scores if score.graded)
+    def _iter_graded(scores):
+        """
+        Yield the scores that belong to explicitly graded blocks
+        """
+        return (score for score in scores if score.graded)
+
+    def _min_or_none(itr):
+        """
+        Return the lowest value in itr, or None if itr is empty.
+
+        In python 3, this is just min(itr, default=None)
+        """
+        try:
+            return min(itr)
+        except ValueError:
+            return None
+
+    total_correct_graded = float_sum(score.earned for score in _iter_graded(scores))
+    total_possible_graded = float_sum(score.possible for score in _iter_graded(scores))
+    any_attempted_graded = any(score.attempted for score in _iter_graded(scores))
+    if any_attempted_graded:
+        first_attempted_graded = _min_or_none(
+            score.first_attempted for score in _iter_graded(scores) if score.first_attempted
+        )
+    else:
+        first_attempted_graded = None
 
     total_correct = float_sum(score.earned for score in scores)
     total_possible = float_sum(score.possible for score in scores)
     any_attempted = any(score.attempted for score in scores)
+    if any_attempted:
+        first_attempted = _min_or_none(
+            score.first_attempted for score in scores if score.first_attempted
+        )
+    else:
+        first_attempted = None
 
     # regardless of whether it is graded
-    all_total = AggregatedScore(total_correct, total_possible, False, any_attempted)
+    all_total = AggregatedScore(total_correct, total_possible, False, any_attempted, first_attempted=first_attempted)
 
     # selecting only graded things
     graded_total = AggregatedScore(
-        total_correct_graded, total_possible_graded, True, any_attempted_graded,
+        total_correct_graded,
+        total_possible_graded,
+        True,
+        any_attempted_graded,
+        first_attempted=first_attempted_graded
     )
 
     return all_total, graded_total

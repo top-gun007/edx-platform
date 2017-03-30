@@ -363,7 +363,6 @@ class PersistentSubsectionGrade(DeleteGradesMixin, TimeStampedModel):
 
         user_id = params.pop('user_id')
         usage_key = params.pop('usage_key')
-        attempted = params.pop('attempted')
 
         grade, _ = cls.objects.update_or_create(
             user_id=user_id,
@@ -371,10 +370,6 @@ class PersistentSubsectionGrade(DeleteGradesMixin, TimeStampedModel):
             usage_key=usage_key,
             defaults=params,
         )
-
-        if attempted and not grade.first_attempted:
-            grade.first_attempted = now()
-            grade.save()
         cls._emit_grade_calculated_event(grade)
         return grade
 
@@ -384,7 +379,6 @@ class PersistentSubsectionGrade(DeleteGradesMixin, TimeStampedModel):
         Wrapper for objects.create.
         """
         cls._prepare_params_and_visible_blocks(params)
-        cls._prepare_attempted_for_create(params, now())
         grade = cls.objects.create(**params)
         cls._emit_grade_calculated_event(grade)
         return grade
@@ -400,9 +394,6 @@ class PersistentSubsectionGrade(DeleteGradesMixin, TimeStampedModel):
         map(cls._prepare_params, grade_params_iter)
         VisibleBlocks.bulk_get_or_create([params['visible_blocks'] for params in grade_params_iter], course_key)
         map(cls._prepare_params_visible_blocks_id, grade_params_iter)
-        first_attempt_timestamp = now()
-        for params in grade_params_iter:
-            cls._prepare_attempted_for_create(params, first_attempt_timestamp)
         grades = [PersistentSubsectionGrade(**params) for params in grade_params_iter]
         grades = cls.objects.bulk_create(grades)
         for grade in grades:
@@ -427,15 +418,6 @@ class PersistentSubsectionGrade(DeleteGradesMixin, TimeStampedModel):
             params['course_id'] = params['usage_key'].course_key
         params['course_version'] = params.get('course_version', None) or ""
         params['visible_blocks'] = BlockRecordList.from_list(params['visible_blocks'], params['course_id'])
-
-    @classmethod
-    def _prepare_attempted_for_create(cls, params, timestamp):
-        """
-        When creating objects, an attempted subsection gets its timestamp set
-        unconditionally.
-        """
-        if params.pop('attempted'):
-            params['first_attempted'] = timestamp
 
     @classmethod
     def _prepare_params_visible_blocks_id(cls, params):

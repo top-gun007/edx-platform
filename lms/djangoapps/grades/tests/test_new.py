@@ -386,7 +386,7 @@ class TestMultipleProblemTypesSubsectionScores(SharedModuleStoreTestCase):
             # Configure one block to return no possible score, the rest to return 3.0 earned / 7.0 possible
             block_count = self.SCORED_BLOCK_COUNT - 1
             mock_score.side_effect = itertools.chain(
-                [(earned_per_block, None, earned_per_block, None, True)],
+                [(earned_per_block, None, earned_per_block, None, True, datetime.datetime(2000, 1, 1))],
                 itertools.repeat(mock_score.return_value)
             )
             score = subsection_factory.update(self.seq1)

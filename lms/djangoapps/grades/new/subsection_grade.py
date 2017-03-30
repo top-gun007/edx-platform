@@ -56,7 +56,7 @@ class SubsectionGrade(object):
             "SubsectionGrade not fully populated yet.  Call init_from_structure or init_from_model "
             "before use."
         )
-        return self.all_total.attempted
+        return self.all_total.first_attempted is not None
 
     def init_from_structure(self, student, course_structure, submissions_scores, csm_scores):
         """
@@ -84,12 +84,14 @@ class SubsectionGrade(object):
             tw_possible=model.possible_graded,
             graded=True,
             attempted=model.first_attempted is not None,
+            first_attempted=model.first_attempted,
         )
         self.all_total = AggregatedScore(
             tw_earned=model.earned_all,
             tw_possible=model.possible_all,
             graded=False,
             attempted=model.first_attempted is not None,
+            first_attempted=model.first_attempted,
         )
         self._log_event(log.debug, u"init_from_model", student)
         return self
@@ -163,7 +165,8 @@ class SubsectionGrade(object):
             earned_graded=self.graded_total.earned,
             possible_graded=self.graded_total.possible,
             visible_blocks=self._get_visible_blocks,
-            attempted=self.attempted
+            # attempted=self.attempted,
+            first_attempted=self.all_total.first_attempted,
         )
 
     @property

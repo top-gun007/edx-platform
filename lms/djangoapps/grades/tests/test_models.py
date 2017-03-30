@@ -212,7 +212,7 @@ class PersistentSubsectionGradeTest(GradesModelTestCase):
             "earned_graded": 6.0,
             "possible_graded": 8.0,
             "visible_blocks": self.block_records,
-            "attempted": True,
+            "first_attempted": now(),
         }
 
     def test_create(self):
@@ -230,7 +230,7 @@ class PersistentSubsectionGradeTest(GradesModelTestCase):
         with self.assertRaises(IntegrityError):
             PersistentSubsectionGrade.create_grade(**self.params)
 
-    @ddt.data('course_version', 'subtree_edited_timestamp')
+    @ddt.data('first_attempted', 'course_version', 'subtree_edited_timestamp')
     def test_optional_fields(self, field):
         del self.params[field]
         PersistentSubsectionGrade.create_grade(**self.params)
@@ -243,7 +243,6 @@ class PersistentSubsectionGradeTest(GradesModelTestCase):
         ("earned_graded", IntegrityError),
         ("possible_graded", IntegrityError),
         ("visible_blocks", KeyError),
-        ("attempted", KeyError),
     )
     @ddt.unpack
     def test_non_optional_fields(self, field, error):
@@ -267,7 +266,7 @@ class PersistentSubsectionGradeTest(GradesModelTestCase):
         self.assertIsInstance(grade.first_attempted, datetime)
 
     def test_unattempted(self):
-        self.params['attempted'] = False
+        self.params['first_attempted'] = None
         self.params['earned_all'] = 0.0
         self.params['earned_graded'] = 0.0
         grade = PersistentSubsectionGrade.create_grade(**self.params)

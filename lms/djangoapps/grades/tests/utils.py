@@ -2,6 +2,7 @@
 Utilities for grades related tests
 """
 from contextlib import contextmanager
+from datetime import datetime
 from mock import patch
 from courseware.module_render import get_module
 from courseware.model_data import FieldDataCache
@@ -34,6 +35,7 @@ def mock_get_score(earned=0, possible=1):
             weight=1,
             graded=True,
             attempted=True,
+            first_attempted=datetime(2000, 1, 1, 0, 0, 0)
         )
         yield mock_score
 
@@ -44,7 +46,11 @@ def mock_get_submissions_score(earned=0, possible=1, attempted=True):
     Mocks the _get_submissions_score function to return the specified values
     """
     with patch('lms.djangoapps.grades.scores._get_score_from_submissions') as mock_score:
-        mock_score.return_value = (earned, possible, earned, possible, attempted)
+        if attempted:
+            first_attempted = datetime(2000, 1, 1, 0, 0, 0)
+        else:
+            first_attempted = None
+        mock_score.return_value = (earned, possible, earned, possible, attempted, first_attempted)
         yield mock_score
 
 
