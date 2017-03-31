@@ -196,24 +196,9 @@ var normalizePathsForCoverage = function(files, normalizeFunc, preprocessors) {
 };
 
 /**
- * Sets nocache on each file in the list.
- * @param {Object} files
- * @param {Bool} enable
- * @return {Object}
- */
-var setNocache = function(files, enable) {
-    files.forEach(function(f) {
-        if (_.isObject(f) && !f.webpack) {
-            f.nocache = enable;
-        }
-    });
-    return files;
-};
-
-/**
  * Sets defaults for each file pattern.
  * RequireJS files are excluded by default.
- * Webpack filess are included by default.
+ * Webpack files are included by default.
  * @param {Object} files
  * @return {Object}
  */
@@ -392,11 +377,6 @@ var configure = function(config, options) {
     // Karma sets included=true by default.
     // We set it to false by default because RequireJS should be used instead.
     files = setDefaults(files);
-
-    // With nocache=true, Karma always serves the latest files from disk.
-    // However, that prevents coverage tracking from working.
-    // So we only set it if coverage tracking is off.
-    setNocache(files, !config.coverage);
 
     var filesForCoverage = _.flatten(
         _.map(

@@ -18,7 +18,7 @@ describe('Course outline factory', () => {
 
     beforeEach(() => {
       loadFixtures('course_experience/fixtures/course-outline-fragment.html');
-      CourseOutline('.block-tree');
+      new CourseOutline('.block-tree');
     });
 
     describe('when the down arrow is pressed', () => {
