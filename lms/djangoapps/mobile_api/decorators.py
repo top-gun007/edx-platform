@@ -5,8 +5,11 @@ import functools
 from rest_framework import status
 from rest_framework.response import Response
 
+from django.http import Http404
+
 from lms.djangoapps.courseware.courses import get_course_with_access
 from lms.djangoapps.courseware.courseware_access_exception import CoursewareAccessException
+from lms.djangoapps.courseware.exceptions import CourseAccessRedirect
 from opaque_keys.edx.keys import CourseKey
 from xmodule.modulestore.django import modulestore
 
@@ -37,6 +40,9 @@ def mobile_course_access(depth=0):
                         depth=depth,
                         check_if_enrolled=True,
                     )
+                except CourseAccessRedirect:
+                    # Raise a 404 if the user does not have course access
+                    raise Http404
                 except CoursewareAccessException as error:
                     return Response(data=error.to_json(), status=status.HTTP_404_NOT_FOUND)
                 return func(self, request, course=course, *args, **kwargs)

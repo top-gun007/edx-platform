@@ -195,7 +195,7 @@ class CurrentGradeViewTest(SharedModuleStoreTestCase, APITestCase):
         self.assertIn('error_code', resp.data)  # pylint: disable=no-member
         self.assertEqual(
             resp.data['error_code'],  # pylint: disable=no-member
-            'user_or_course_does_not_exist'
+            'course_access_denied'
         )
 
     def test_wrong_course_key(self):

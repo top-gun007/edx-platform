@@ -14,6 +14,7 @@ from openedx.core.djangoapps.user_api.accounts.views import AccountViewSet
 
 from rest_framework.exceptions import PermissionDenied
 
+from lms.djangoapps.courseware.exceptions import CourseAccessRedirect
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.locator import CourseKey
 from courseware.courses import get_course_with_access
@@ -80,6 +81,8 @@ def _get_course(course_key, user):
     try:
         course = get_course_with_access(user, 'load', course_key, check_if_enrolled=True)
     except Http404:
+        raise CourseNotFoundError("Course not found.")
+    except CourseAccessRedirect:
         raise CourseNotFoundError("Course not found.")
     if not any([tab.type == 'discussion' and tab.is_enabled(course, user) for tab in course.tabs]):
         raise DiscussionDisabledError("Discussion is disabled for the course.")

@@ -2,9 +2,12 @@
 Module to define url helpers functions
 """
 from urllib import urlencode
+
+from django.core.urlresolvers import reverse
+
+from request_cache.middleware import RequestCache
 from xmodule.modulestore.search import path_to_location, navigation_index
 from xmodule.modulestore.django import modulestore
-from django.core.urlresolvers import reverse
 
 
 def get_redirect_url(course_key, usage_key):
@@ -50,15 +53,15 @@ def get_redirect_url(course_key, usage_key):
     return redirect_url
 
 
-def get_redirect_url_for_global_staff(course_key, _next):
+def get_redirect_url_for_global_staff(course_key, _next=None):
     """
     Returns the redirect url for staff enrollment
 
     Args:
         course_key(str): Course key string
-        _next(str): Redirect url of course component
+        _next(str): Redirect URL of course component (defaults to the current URL)
     """
     redirect_url = ("{url}?next={redirect}".format(
         url=reverse('enroll_staff', args=[unicode(course_key)]),
-        redirect=_next))
+        redirect=_next or RequestCache.get_current_request().path))
     return redirect_url
