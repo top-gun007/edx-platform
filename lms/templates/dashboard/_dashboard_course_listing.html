@@ -19,6 +19,7 @@ from student.helpers import (
   VERIFY_STATUS_NEED_TO_REVERIFY,
   DISABLE_UNENROLL_CERT_STATES,
 )
+from util.course import get_link_for_about_page
 %>
 
 <%
@@ -149,17 +150,11 @@ from student.helpers import (
 
               % if share_settings:
                 <%
-                  if share_settings.get("CUSTOM_COURSE_URLS", False):
-                    if course_overview.social_sharing_url:
-                      share_url = urllib.quote_plus(course_overview.social_sharing_url)
-                    else:
-                      share_url = ''
-                  else:
-                    share_url = urllib.quote_plus(request.build_absolute_uri(reverse('about_course', args=[unicode(course_overview.id)])))
+                  share_url = urllib.quote_plus(get_link_for_about_page(course_overview))
                   share_window_name = 'shareWindow'
                   share_window_config = 'toolbar=no, location=no, status=no, menubar=no, scrollbars=yes, resizable=yes, width=640, height=480'
                 %>
-                % if share_url and share_settings.get('DASHBOARD_FACEBOOK', False):
+                % if share_settings.get('DASHBOARD_FACEBOOK', False):
                   <% facebook_url = 'https://www.facebook.com/sharer/sharer.php?u=' + share_url %>
                     <a
                       data-tooltip="${_('Share on Facebook')}"
@@ -174,7 +169,7 @@ from student.helpers import (
                       <span class="fa fa-facebook" aria-hidden="true"></span>
                     </a>
                 % endif
-                % if share_url and share_settings.get('DASHBOARD_TWITTER', False):
+                % if share_settings.get('DASHBOARD_TWITTER', False):
                   <% share_text_default = _("I'm learning on {platform_name}:").format(platform_name=settings.PLATFORM_NAME) %>
                   <% share_text = urllib.quote_plus(share_settings.get('DASHBOARD_TWITTER_TEXT', share_text_default)) %>
                   <% twitter_url = 'https://twitter.com/intent/tweet?text=' + share_text + '%20' + share_url %>
