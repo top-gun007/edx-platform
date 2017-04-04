@@ -6,7 +6,7 @@ from uuid import uuid4
 import json
 
 from common.test.acceptance.fixtures import LMS_BASE_URL
-from common.test.acceptance.fixtures.course import CourseFixture
+from common.test.acceptance.fixtures.course import (CourseFixture, XBlockFixtureDesc)
 from common.test.acceptance.fixtures.discussion import (
     SingleThreadViewFixture,
     Thread,
@@ -111,8 +111,21 @@ class BaseDiscussionTestCase(UniqueCourseTest, ForumsConfigMixin):
 
         self.discussion_id = "test_discussion_{}".format(uuid4().hex)
         self.course_fixture = CourseFixture(**self.course_info)
+        self.course_fixture.add_children(
+            XBlockFixtureDesc("chapter", "Test Section").add_children(
+                XBlockFixtureDesc("sequential", "Test Subsection").add_children(
+                    XBlockFixtureDesc("vertical", "Test Unit").add_children(
+                        XBlockFixtureDesc(
+                            "discussion",
+                            "Test Discussion",
+                            metadata={"discussion_id": self.discussion_id}
+                        )
+                    )
+                )
+            )
+        )
         self.course_fixture.add_advanced_settings(
-            {'discussion_topics': {'value': {'Test Discussion Topic': {'id': self.discussion_id}}}}
+            {'discussion_topics': {'value': {'General': {'id': 'course'}}}}
         )
         self.course_fixture.install()
 
