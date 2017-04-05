@@ -217,6 +217,7 @@ function(_) {
                 .removeClass('is-initialized')
                 .find('.spinner')
                 .attr({'aria-hidden': 'false'});
+            this.videoEl.off('remove');
             this.videoEl.remove();
         };
 

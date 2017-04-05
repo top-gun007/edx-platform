@@ -188,6 +188,7 @@ function(HTML5Video, HTML5HLSVideo, Resizer, HLS, _) {
             }
             player = state.videoEl = state.videoPlayer.player.videoEl;
             player[0].addEventListener(eventToBeTriggered, state.videoPlayer.onLoadMetadataHtml5, false);
+            player.on('remove', state.videoPlayer.destroy);
         } else {
             youTubeId = state.youtubeId();
 
@@ -206,6 +207,8 @@ function(HTML5Video, HTML5HLSVideo, Resizer, HLS, _) {
                 var player = state.videoEl = state.el.find('iframe'),
                     videoWidth = player.attr('width') || player.width(),
                     videoHeight = player.attr('height') || player.height();
+
+                player.on('remove', state.videoPlayer.destroy);
 
                 _resize(state, videoWidth, videoHeight);
                 _updateVcrAndRegion(state, true);
