@@ -14,10 +14,10 @@ const wpconfig = {
   output: {
     path: path.resolve(__dirname, 'common/static/bundles'),
     filename: '[name]-[hash].js',
-    libraryTarget: 'window',
+    libraryTarget: 'window'
   },
 
-  devtool: isProd ? false : 'cheap-eval-source-map',
+  devtool: isProd ? false : 'source-map',
 
   plugins: [
     new webpack.NoEmitOnErrorsPlugin(),
@@ -42,6 +42,7 @@ const wpconfig = {
       },
     ],
   },
+
   resolve: {
     extensions: ['.js', '.json'],
   }
