@@ -68,9 +68,9 @@ class UserReadOnlySerializer(serializers.Serializer):
         :return: Dict serialized account
         """
         try:
-            profile = user.profile
+            user_profile = user.profile
         except ObjectDoesNotExist:
-            profile = None
+            user_profile = None
             LOGGER.warning("user profile for the user [%s] does not exist", user.username)
 
         accomplishments_shared = badges_enabled()
@@ -91,7 +91,7 @@ class UserReadOnlySerializer(serializers.Serializer):
             "country": None,
             "profile_image": None,
             "language_proficiencies": None,
-            "name": profile.name if profile else None,
+            "name": None,
             "gender": None,
             "goals": None,
             "year_of_birth": None,
@@ -102,37 +102,36 @@ class UserReadOnlySerializer(serializers.Serializer):
             "account_privacy": self.configuration.get('default_visibility')
         }
 
-        if profile:
+        if user_profile:
             data.update(
                 {
-                    "bio": AccountLegacyProfileSerializer.convert_empty_to_None(profile.bio),
-                    "country": AccountLegacyProfileSerializer.convert_empty_to_None(profile.country.code),
+                    "bio": AccountLegacyProfileSerializer.convert_empty_to_None(user_profile.bio),
+                    "country": AccountLegacyProfileSerializer.convert_empty_to_None(user_profile.country.code),
                     "profile_image": AccountLegacyProfileSerializer.get_profile_image(
-                        profile, user, self.context.get('request')
+                        user_profile, user, self.context.get('request')
                     ),
                     "language_proficiencies": LanguageProficiencySerializer(
-                        profile.language_proficiencies.all(), many=True
+                        user_profile.language_proficiencies.all(), many=True
                     ).data,
-                    "name": profile.name,
-                    "gender": AccountLegacyProfileSerializer.convert_empty_to_None(profile.gender),
-                    "goals": profile.goals,
-                    "year_of_birth": profile.year_of_birth,
+                    "name": user_profile.name,
+                    "gender": AccountLegacyProfileSerializer.convert_empty_to_None(user_profile.gender),
+                    "goals": user_profile.goals,
+                    "year_of_birth": user_profile.year_of_birth,
                     "level_of_education": AccountLegacyProfileSerializer.convert_empty_to_None(
-                        profile.level_of_education
+                        user_profile.level_of_education
                     ),
-                    "mailing_address": profile.mailing_address,
-                    "requires_parental_consent": profile.requires_parental_consent(),
-                    "account_privacy": get_profile_visibility(profile, user, self.configuration)
+                    "mailing_address": user_profile.mailing_address,
+                    "requires_parental_consent": user_profile.requires_parental_consent(),
+                    "account_privacy": get_profile_visibility(user_profile, user, self.configuration)
                 }
             )
 
         if self.custom_fields:
             fields = self.custom_fields
+        elif user_profile:
+            fields = _visible_fields(user_profile, user, self.configuration)
         else:
-            if profile:
-                fields = _visible_fields(profile, user, self.configuration)
-            else:
-                fields = self.configuration.get('public_fields')
+            fields = self.configuration.get('public_fields')
 
         return self._filter_fields(
             fields,

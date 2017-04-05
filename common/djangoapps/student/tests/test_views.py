@@ -223,7 +223,9 @@ class StudentDashboardTests(TestCase):
         self.assertEqual(actual, expected)
 
     def test_redirect_account_settings(self):
-        """ Verify if user does not have profile he/she is redirected to account_settings. """
+        """
+        Verify if user does not have profile he/she is redirected to account_settings.
+        """
         UserProfile.objects.get(user=self.user).delete()
         response = self.client.get(self.path)
         self.assertRedirects(response, reverse('account_settings'))

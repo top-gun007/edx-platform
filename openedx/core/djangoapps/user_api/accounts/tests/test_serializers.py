@@ -35,7 +35,9 @@ class UserReadOnlySerializerTest(TestCase):
         }
 
     def test_serializer_data(self):
-        """Test serializer return data properly."""
+        """
+        Test serializer return data properly.
+        """
         UserProfile.objects.create(user=self.user, name='test name')
         data = UserReadOnlySerializer(self.user, configuration=self.config, context={'request': self.request}).data
         self.assertEqual(data['username'], self.user.username)
