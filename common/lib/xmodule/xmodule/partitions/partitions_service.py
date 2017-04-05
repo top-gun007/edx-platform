@@ -42,11 +42,11 @@ def _get_dynamic_partitions(course):
     Return the dynamic user partitions for this course.
     If none exists, returns an empty array.
     """
-    enrollment_partition = _create_enrollment_track_partition(course)
+    enrollment_partition = create_enrollment_track_partition(course)
     return [enrollment_partition] if enrollment_partition else []
 
 
-def _create_enrollment_track_partition(course):
+def create_enrollment_track_partition(course):
     """
     Create and return the dynamic enrollment track user partition.
     If it cannot be created, None is returned.

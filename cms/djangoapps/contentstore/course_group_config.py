@@ -9,9 +9,8 @@ from util.db import generate_int_id, MYSQL_MAX_INT
 from django.utils.translation import ugettext as _
 from contentstore.utils import reverse_usage_url
 from xmodule.partitions.partitions import UserPartition, MINIMUM_STATIC_PARTITION_ID
-from xmodule.partitions.partitions_service import get_all_partitions_for_course
+from xmodule.partitions.partitions_service import get_all_partitions_for_course, create_enrollment_track_partition
 from xmodule.split_test_module import get_split_user_partitions
-from openedx.core.djangoapps.course_groups.partition_scheme import get_cohorted_user_partition
 
 MINIMUM_GROUP_ID = MINIMUM_STATIC_PARTITION_ID
 
@@ -371,14 +370,20 @@ class GroupConfiguration(object):
 
     @staticmethod
     def get_empty_user_partition(course, scheme):
-        content_group_configuration = UserPartition(
+        if scheme == ENROLLMENT_SCHEME:
+            enrollment_partition = create_enrollment_track_partition(course)
+
+            if enrollment_partition is not None:
+                return enrollment_partition.to_json()
+
+        empty_user_partition = UserPartition(
             id=generate_int_id(MINIMUM_GROUP_ID, MYSQL_MAX_INT, GroupConfiguration.get_used_ids(course)),
             name=CONTENT_GROUP_CONFIGURATION_NAME,
             description=CONTENT_GROUP_CONFIGURATION_DESCRIPTION,
             groups=[],
             scheme_id=scheme
         )
-        return content_group_configuration.to_json()
+        return empty_user_partition.to_json()
 
     @staticmethod
     def get_all_content_groups(store, course):

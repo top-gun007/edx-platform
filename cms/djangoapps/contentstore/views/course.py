@@ -1523,7 +1523,7 @@ def group_configurations_list_handler(request, course_key_string):
 
             all_configurations = GroupConfiguration.get_all_content_groups(store, course)
             content_group_configuration = GroupConfiguration.get_empty_user_partition(course, COHORT_SCHEME)
-            enrollment_track_configuration = {}
+            enrollment_track_configuration = GroupConfiguration.get_empty_user_partition(course, ENROLLMENT_SCHEME)
             should_show_enrollment_track = False
 
             for config in all_configurations:
