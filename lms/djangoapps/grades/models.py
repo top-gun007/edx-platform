@@ -21,6 +21,7 @@ from eventtracking import tracker
 from model_utils.models import TimeStampedModel
 from track import contexts
 from track.event_transaction_utils import get_event_transaction_id, get_event_transaction_type
+import waffle
 
 from coursewarehistoryextended.fields import UnsignedBigIntAutoField
 from opaque_keys.edx.keys import CourseKey, UsageKey
@@ -244,7 +245,7 @@ class PersistentSubsectionGrade(DeleteGradesMixin, TimeStampedModel):
     A django model tracking persistent grades at the subsection level.
     """
 
-    ESTIMATE_FIRST_ATTEMPTED_FROM_SCORE = True
+    
 
     class Meta(object):
         app_label = "grades"
@@ -374,7 +375,7 @@ class PersistentSubsectionGrade(DeleteGradesMixin, TimeStampedModel):
             defaults=params,
         )
         if first_attempted is not None and grade.first_attempted is None:
-            if cls.ESTIMATE_FIRST_ATTEMPTED_FROM_SCORE:
+            if waffle.switch_is_active('grades_estimate_first_attempted'):
                 grade.first_attempted = first_attempted
             else:
                 grade.first_attempted = now()
@@ -388,7 +389,7 @@ class PersistentSubsectionGrade(DeleteGradesMixin, TimeStampedModel):
         Update the value of 'first_attempted' to now() if we aren't
         using score-based estimates.
         """
-        if params['first_attempted'] is not None and not cls.ESTIMATE_FIRST_ATTEMPTED_FROM_SCORE:
+        if params['first_attempted'] is not None and not waffle.switch_is_active('grades_estimate_first_attempted'):
             params['first_attempted'] = now()
 
     @classmethod
