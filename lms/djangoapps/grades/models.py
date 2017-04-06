@@ -245,8 +245,6 @@ class PersistentSubsectionGrade(DeleteGradesMixin, TimeStampedModel):
     A django model tracking persistent grades at the subsection level.
     """
 
-    
-
     class Meta(object):
         app_label = "grades"
         unique_together = [
@@ -379,6 +377,7 @@ class PersistentSubsectionGrade(DeleteGradesMixin, TimeStampedModel):
                 grade.first_attempted = first_attempted
             else:
                 grade.first_attempted = now()
+            grade.save()
 
         cls._emit_grade_calculated_event(grade)
         return grade
