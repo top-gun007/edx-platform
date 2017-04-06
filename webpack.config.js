@@ -17,7 +17,7 @@ const wpconfig = {
     libraryTarget: 'window'
   },
 
-  devtool: isProd ? false : 'source-map',
+  devtool: isProd ? false : 'eval-source-map',
 
   plugins: [
     new webpack.NoEmitOnErrorsPlugin(),
