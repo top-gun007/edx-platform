@@ -6,6 +6,7 @@ function($, _, gettext, BasePage, GroupConfigurationsListView, ContentGroupListV
     'use strict';
     var GroupConfigurationsPage = BasePage.extend({
         initialize: function(options) {
+            var restrictEditing = false;
             BasePage.prototype.initialize.call(this);
             this.experimentsEnabled = options.experimentsEnabled;
             if (this.experimentsEnabled) {
@@ -15,17 +16,19 @@ function($, _, gettext, BasePage, GroupConfigurationsListView, ContentGroupListV
                 });
             }
 
-            this.contentGroupConfiguration = options.contentGroupConfiguration;
-            this.cohortGroupsListView = new ContentGroupListView({
-                collection: this.contentGroupConfiguration.get('groups')
-            });
-
-            this.enrollmentTrackConfiguration = options.enrollmentTrackConfiguration;
-            if (this.enrollmentTrackConfiguration.get('groups').length > 1) {
-                this.enrollmentGroupListView = new ContentGroupListView({
-                    collection: this.enrollmentTrackConfiguration.get('groups'),
-                    restrictEditing: true
-                });
+            this.allGroupConfigurations = options.allGroupConfigurations;
+            this.allGroupViewList = [];
+            for(var i = 0; i<this.allGroupConfigurations.length; i++){
+                if(this.allGroupConfigurations[i].scheme === 'enrollment_track'){
+                    restrictEditing = true;
+                }
+                this.allGroupViewList.push(
+                    new ContentGroupListView({
+                        collection: this.allGroupConfigurations[i].get('groups'),
+                        restrictEditing: true,
+                        scheme: this.allGroupConfigurations[i].get('scheme', 'none')
+                    })
+                )
             }
         },
 
@@ -34,9 +37,11 @@ function($, _, gettext, BasePage, GroupConfigurationsListView, ContentGroupListV
             if (this.experimentsEnabled) {
                 this.$('.wrapper-groups.experiment-groups').append(this.experimentGroupsListView.render().el);
             }
-            this.$('.wrapper-groups.content-groups').append(this.cohortGroupsListView.render().el);
-            if (this.enrollmentTrackConfiguration.get('groups').length > 1) {
-                this.$('.wrapper-groups.enrollment-tracks').append(this.enrollmentGroupListView.render().el);
+
+            // Render the remaining Configuration groups
+            for( var i = 0; i<this.allGroupViewList.length; i++){
+                var current_class = '.wrapper-groups.content-groups.' + this.allGroupViewList[i].scheme;
+                this.$(current_class).append(this.allGroupViewList[i].render().el);
             }
 
             this.addWindowActions();

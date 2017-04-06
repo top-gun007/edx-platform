@@ -4,32 +4,30 @@ define([
     'use strict';
     return function(experimentsEnabled,
                     experimentGroupConfigurationsJson,
-                    contentGroupConfigurationJson,
-                    enrollmentTrackConfigurationJson,
+                    allGroupConfigurationJson,
                     groupConfigurationUrl,
                     courseOutlineUrl) {
+
         var experimentGroupConfigurations = new GroupConfigurationCollection(
                 experimentGroupConfigurationsJson, {parse: true}
             ),
-            contentGroupConfiguration = new GroupConfigurationModel(contentGroupConfigurationJson, {
-                parse: true, canBeEmpty: true
-            }),
-            enrollmentTrackConfiguration = new GroupConfigurationModel(enrollmentTrackConfigurationJson, {
-                parse: true, canBeEmpty: true
-            });
+            allGroupConfigurations = [];
+
+        for (var i = 0; i < allGroupConfigurationJson.length; i++){
+            allGroupConfigurations.push(new GroupConfigurationModel(allGroupConfigurationJson[i],
+                {parse: true, canBeEmpty: true})
+            )
+        }
 
         experimentGroupConfigurations.url = groupConfigurationUrl;
         experimentGroupConfigurations.outlineUrl = courseOutlineUrl;
-        contentGroupConfiguration.urlRoot = groupConfigurationUrl;
-        contentGroupConfiguration.outlineUrl = courseOutlineUrl;
-        enrollmentTrackConfiguration.url = groupConfigurationUrl;
-        enrollmentTrackConfiguration.outlineUrl = courseOutlineUrl;
+        allGroupConfigurations.urlRoot = groupConfigurationUrl;
+        allGroupConfigurations.outlineUrl = courseOutlineUrl;
         new GroupConfigurationsPage({
             el: $('#content'),
             experimentsEnabled: experimentsEnabled,
             experimentGroupConfigurations: experimentGroupConfigurations,
-            contentGroupConfiguration: contentGroupConfiguration,
-            enrollmentTrackConfiguration: enrollmentTrackConfiguration
+            allGroupConfigurations: allGroupConfigurations
         }).render();
     };
 });

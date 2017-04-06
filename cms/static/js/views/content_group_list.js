@@ -21,6 +21,8 @@ define([
 
         restrictEditing: false,
 
+        scheme: 'none',
+
         createItemView: function(options) {
             return new ContentGroupItemView(options);
         }

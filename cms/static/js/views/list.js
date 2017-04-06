@@ -27,6 +27,7 @@ define([
 
         initialize: function() {
             this.restrictEditing = this.options.restrictEditing;
+            this.scheme = this.options.scheme;
             this.listenTo(this.collection, 'add', this.addNewItemView);
             this.listenTo(this.collection, 'remove', this.onRemoveItem);
             this.template = this.loadTemplate('list');

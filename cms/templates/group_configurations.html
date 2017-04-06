@@ -28,8 +28,7 @@ from openedx.core.djangolib.markup import HTML, Text
       GroupConfigurationsFactory(
           ${should_show_experiment_groups | n, dump_js_escaped_json},
           ${experiment_group_configurations | n, dump_js_escaped_json},
-          ${content_group_configuration | n, dump_js_escaped_json},
-          ${enrollment_track_configuration | n, dump_js_escaped_json},
+          ${all_group_configurations | n, dump_js_escaped_json},
           "${group_configuration_url | n, js_escaped_string}",
           "${course_outline_url | n, js_escaped_string}",
           ${should_show_enrollment_track | n, dump_js_escaped_json}
@@ -51,21 +50,15 @@ from openedx.core.djangolib.markup import HTML, Text
     <section class="content">
 
       <article class="content-primary" role="main">
-        % if should_show_enrollment_track:
-          <div class="wrapper-groups enrollment-tracks">
-            <h3 class="title">${_("Enrollment Tracks")}</h3>
+
+        % for config in all_group_configurations:
+          <div class="wrapper-groups content-groups ${config['scheme']}">
+            <h3 class="title">${config['name']}</h3>
               <div class="ui-loading">
                   <p><span class="spin"><span class="icon fa fa-refresh" aria-hidden="true"></span></span> <span class="copy">${_("Loading")}</span></p>
               </div>
           </div>
-        %endif
-
-        <div class="wrapper-groups content-groups">
-          <h3 class="title">${_("Content Groups")}</h3>
-            <div class="ui-loading">
-                <p><span class="spin"><span class="icon fa fa-refresh" aria-hidden="true"></span></span> <span class="copy">${_("Loading")}</span></p>
-            </div>
-        </div>
+        % endfor
 
         % if should_show_experiment_groups:
           <div class="wrapper-groups experiment-groups">

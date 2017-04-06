@@ -1522,16 +1522,17 @@ def group_configurations_list_handler(request, course_key_string):
                 experiment_group_configurations = None
 
             all_configurations = GroupConfiguration.get_all_content_groups(store, course)
-            content_group_configuration = GroupConfiguration.get_empty_user_partition(course, COHORT_SCHEME)
-            enrollment_track_configuration = GroupConfiguration.get_empty_user_partition(course, ENROLLMENT_SCHEME)
             should_show_enrollment_track = False
 
             for config in all_configurations:
-                if config['scheme'] == 'cohort':
-                    content_group_configuration = config
-                elif config['scheme'] == 'enrollment_track':
+                if config['scheme'] == 'enrollment_track':
                     enrollment_track_configuration = config
                     should_show_enrollment_track = len(enrollment_track_configuration['groups']) > 1
+
+                    # Remove the enrollment track config and add it to the front of the list if it should be shown
+                    all_configurations.remove(config)
+                    if should_show_enrollment_track:
+                        all_configurations.insert(0, config)
 
             return render_to_response('group_configurations.html', {
                 'context_course': course,
@@ -1539,8 +1540,7 @@ def group_configurations_list_handler(request, course_key_string):
                 'course_outline_url': course_outline_url,
                 'experiment_group_configurations': experiment_group_configurations,
                 'should_show_experiment_groups': should_show_experiment_groups,
-                'content_group_configuration': content_group_configuration,
-                'enrollment_track_configuration': enrollment_track_configuration,
+                'all_group_configurations': all_configurations,
                 'should_show_enrollment_track': should_show_enrollment_track
             })
         elif "application/json" in request.META.get('HTTP_ACCEPT'):
