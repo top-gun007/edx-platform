@@ -6,7 +6,7 @@ function($, _, gettext, BasePage, GroupConfigurationsListView, ContentGroupListV
     'use strict';
     var GroupConfigurationsPage = BasePage.extend({
         initialize: function(options) {
-            var restrictEditing = false;
+            var restrictEditing = false, i;
             BasePage.prototype.initialize.call(this);
             this.experimentsEnabled = options.experimentsEnabled;
             if (this.experimentsEnabled) {
@@ -18,30 +18,30 @@ function($, _, gettext, BasePage, GroupConfigurationsListView, ContentGroupListV
 
             this.allGroupConfigurations = options.allGroupConfigurations;
             this.allGroupViewList = [];
-            for(var i = 0; i<this.allGroupConfigurations.length; i++){
-                if(this.allGroupConfigurations[i].scheme === 'enrollment_track'){
+            for (i = 0; i < this.allGroupConfigurations.length; i++) {
+                if (this.allGroupConfigurations[i].scheme === 'enrollment_track') {
                     restrictEditing = true;
                 }
                 this.allGroupViewList.push(
                     new ContentGroupListView({
                         collection: this.allGroupConfigurations[i].get('groups'),
-                        restrictEditing: true,
+                        restrictEditing: restrictEditing,
                         scheme: this.allGroupConfigurations[i].get('scheme', 'none')
                     })
-                )
+                );
             }
         },
 
         renderPage: function() {
-            var hash = this.getLocationHash();
+            var hash = this.getLocationHash(), i, currentClass;
             if (this.experimentsEnabled) {
                 this.$('.wrapper-groups.experiment-groups').append(this.experimentGroupsListView.render().el);
             }
 
             // Render the remaining Configuration groups
-            for( var i = 0; i<this.allGroupViewList.length; i++){
-                var current_class = '.wrapper-groups.content-groups.' + this.allGroupViewList[i].scheme;
-                this.$(current_class).append(this.allGroupViewList[i].render().el);
+            for (i = 0; i < this.allGroupViewList.length; i++) {
+                currentClass = '.wrapper-groups.content-groups.' + this.allGroupViewList[i].scheme;
+                this.$(currentClass).append(this.allGroupViewList[i].render().el);
             }
 
             this.addWindowActions();

@@ -7,16 +7,16 @@ define([
                     allGroupConfigurationJson,
                     groupConfigurationUrl,
                     courseOutlineUrl) {
-
         var experimentGroupConfigurations = new GroupConfigurationCollection(
                 experimentGroupConfigurationsJson, {parse: true}
             ),
-            allGroupConfigurations = [];
+            allGroupConfigurations = [],
+            i;
 
-        for (var i = 0; i < allGroupConfigurationJson.length; i++){
+        for (i = 0; i < allGroupConfigurationJson.length; i++) {
             allGroupConfigurations.push(new GroupConfigurationModel(allGroupConfigurationJson[i],
                 {parse: true, canBeEmpty: true})
-            )
+            );
         }
 
         experimentGroupConfigurations.url = groupConfigurationUrl;
