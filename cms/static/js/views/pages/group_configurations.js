@@ -7,6 +7,9 @@ function($, _, gettext, BasePage, GroupConfigurationsListView, ContentGroupListV
     var GroupConfigurationsPage = BasePage.extend({
         initialize: function(options) {
             var restrictEditing = false, i;
+            this.COHORT_SCHEME = 'cohort';
+            this.ENROLLMENT_SCHEME = 'enrollment_track';
+
             BasePage.prototype.initialize.call(this);
             this.experimentsEnabled = options.experimentsEnabled;
             if (this.experimentsEnabled) {
@@ -19,7 +22,8 @@ function($, _, gettext, BasePage, GroupConfigurationsListView, ContentGroupListV
             this.allGroupConfigurations = options.allGroupConfigurations;
             this.allGroupViewList = [];
             for (i = 0; i < this.allGroupConfigurations.length; i++) {
-                if (this.allGroupConfigurations[i].scheme === 'enrollment_track') {
+                restrictEditing = false;
+                if (this.allGroupConfigurations[i].get('scheme') === this.ENROLLMENT_SCHEME) {
                     restrictEditing = true;
                 }
                 this.allGroupViewList.push(
@@ -56,8 +60,22 @@ function($, _, gettext, BasePage, GroupConfigurationsListView, ContentGroupListV
             $(window).on('beforeunload', this.onBeforeUnload.bind(this));
         },
 
+        /**
+         * Checks the Content Group Configurations to see if the isDirty bit is set
+         * @returns {boolean} True if any content group has the dirty bit set.
+         */
+        areContentConfigurationsDirty: function() {
+            var i;
+            for (i = 0; i < this.allGroupConfigurations.length; i++){
+                if (this.allGroupConfigurations[i].isDirty()) {
+                    return true;
+                }
+            }
+            return false;
+        },
+
         onBeforeUnload: function() {
-            var dirty = this.contentGroupConfiguration.isDirty() ||
+            var dirty = this.areContentConfigurationsDirty() ||
                 (this.experimentsEnabled && this.experimentGroupConfigurations.find(function(configuration) {
                     return configuration.isDirty();
                 }));
