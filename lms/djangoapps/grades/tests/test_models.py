@@ -230,7 +230,7 @@ class PersistentSubsectionGradeTest(GradesModelTestCase):
         with self.assertRaises(IntegrityError):
             PersistentSubsectionGrade.create_grade(**self.params)
 
-    @ddt.data('first_attempted', 'course_version', 'subtree_edited_timestamp')
+    @ddt.data('course_version', 'subtree_edited_timestamp')
     def test_optional_fields(self, field):
         del self.params[field]
         PersistentSubsectionGrade.create_grade(**self.params)
@@ -242,6 +242,7 @@ class PersistentSubsectionGradeTest(GradesModelTestCase):
         ("possible_all", IntegrityError),
         ("earned_graded", IntegrityError),
         ("possible_graded", IntegrityError),
+        ("first_attempted", KeyError),
         ("visible_blocks", KeyError),
     )
     @ddt.unpack

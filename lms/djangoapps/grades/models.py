@@ -244,6 +244,8 @@ class PersistentSubsectionGrade(DeleteGradesMixin, TimeStampedModel):
     A django model tracking persistent grades at the subsection level.
     """
 
+    ESTIMATE_FIRST_ATTEMPTED_FROM_SCORE = True
+
     class Meta(object):
         app_label = "grades"
         unique_together = [
@@ -361,6 +363,7 @@ class PersistentSubsectionGrade(DeleteGradesMixin, TimeStampedModel):
         """
         cls._prepare_params_and_visible_blocks(params)
 
+        first_attempted = params.pop('first_attempted')
         user_id = params.pop('user_id')
         usage_key = params.pop('usage_key')
 
@@ -370,8 +373,23 @@ class PersistentSubsectionGrade(DeleteGradesMixin, TimeStampedModel):
             usage_key=usage_key,
             defaults=params,
         )
+        if first_attempted is not None and grade.first_attempted is None:
+            if cls.ESTIMATE_FIRST_ATTEMPTED_FROM_SCORE:
+                grade.first_attempted = first_attempted
+            else:
+                grade.first_attempted = now()
+
         cls._emit_grade_calculated_event(grade)
         return grade
+
+    @classmethod
+    def _prepare_first_attempted_for_create(cls, params):
+        """
+        Update the value of 'first_attempted' to now() if we aren't
+        using score-based estimates.
+        """
+        if params['first_attempted'] is not None and not cls.ESTIMATE_FIRST_ATTEMPTED_FROM_SCORE:
+            params['first_attempted'] = now()
 
     @classmethod
     def create_grade(cls, **params):
@@ -379,6 +397,8 @@ class PersistentSubsectionGrade(DeleteGradesMixin, TimeStampedModel):
         Wrapper for objects.create.
         """
         cls._prepare_params_and_visible_blocks(params)
+        cls._prepare_first_attempted_for_create(params)
+
         grade = cls.objects.create(**params)
         cls._emit_grade_calculated_event(grade)
         return grade
@@ -394,6 +414,7 @@ class PersistentSubsectionGrade(DeleteGradesMixin, TimeStampedModel):
         map(cls._prepare_params, grade_params_iter)
         VisibleBlocks.bulk_get_or_create([params['visible_blocks'] for params in grade_params_iter], course_key)
         map(cls._prepare_params_visible_blocks_id, grade_params_iter)
+        map(cls._prepare_first_attempted_for_create, grade_params_iter)
         grades = [PersistentSubsectionGrade(**params) for params in grade_params_iter]
         grades = cls.objects.bulk_create(grades)
         for grade in grades:

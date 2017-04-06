@@ -165,7 +165,6 @@ class SubsectionGrade(object):
             earned_graded=self.graded_total.earned,
             possible_graded=self.graded_total.possible,
             visible_blocks=self._get_visible_blocks,
-            # attempted=self.attempted,
             first_attempted=self.all_total.first_attempted,
         )
 
