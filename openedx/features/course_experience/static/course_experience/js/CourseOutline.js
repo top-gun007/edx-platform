@@ -7,7 +7,9 @@ export class CourseOutline {  // eslint-disable-line import/prefer-default-expor
   constructor() {
     const focusable = [...document.querySelectorAll('.outline-item.focusable')];
 
-    focusable.forEach((el, index) => el.addEventListener('keydown', (event) => {
+    focusable.forEach(el => el.addEventListener('keydown', (event) => {
+      const index = focusable.indexOf(event.target);
+
       switch (event.key) {  // eslint-disable-line default-case
         case 'ArrowDown':  // @TODO: Get these from the UI Toolkit
           event.preventDefault();
