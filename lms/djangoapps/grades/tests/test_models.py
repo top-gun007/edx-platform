@@ -272,7 +272,7 @@ class PersistentSubsectionGradeTest(GradesModelTestCase):
     @freeze_time(now())
     def test_update_or_create_attempted(self, is_active, expected_first_attempted):
         if expected_first_attempted is None:
-            expected_first_attempted=now()
+            expected_first_attempted = now()
         with waffle.testutils.override_switch('grades_estimate_first_attempted', active=is_active):
             grade = PersistentSubsectionGrade.update_or_create_grade(**self.params)
             self.assertIsInstance(grade.first_attempted, datetime)
