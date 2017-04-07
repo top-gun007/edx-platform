@@ -8,8 +8,8 @@ describe('Course outline factory', () => {
   let outline;  // eslint-disable-line no-unused-vars
 
   // Our block IDs are invalid DOM selectors unless we first escape `:`, `+` and `@`
-  const escapeIds = idObj => Object.assign({}, ...Object.entries(idObj).map(([key, value]) => ({
-    [key]: value
+  const escapeIds = idObj => Object.assign({}, ...Object.keys(idObj).map(key => ({
+    [key]: idObj[key]
       .replace(/@/g, '\\@')
       .replace(/:/, '\\:')
       .replace(/\+/g, '\\+'),
