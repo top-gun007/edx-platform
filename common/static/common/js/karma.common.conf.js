@@ -189,7 +189,11 @@ function normalizePathsForCoverage(files, normalizeFunc, preprocessors) {
     files.forEach(function(file) {
         if (!file.ignoreCoverage) {
             normalizedFile = normalizeFn(appRoot, file.pattern);
-            filesForCoverage[normalizedFile] = ['coverage'].concat(preprocessors[normalizedFile] || []);
+            if (preprocessors && preprocessors.hasOwnProperty(normalizedFile)) {
+                filesForCoverage[normalizedFile] = ['coverage'].concat(preprocessors[normalizedFile]);
+            } else {
+                filesForCoverage[normalizedFile] = ['coverage'];
+            }
         }
     });
 
