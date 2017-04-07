@@ -346,7 +346,13 @@ function getBaseConfig(config, useRequireJs) {
             captureConsole: false
         },
 
-        webpack: webpackConfig
+        webpack: webpackConfig,
+
+        webpackMiddleware: {
+            watchOptions: {
+                poll: true
+            }
+        }
     };
 }
 
