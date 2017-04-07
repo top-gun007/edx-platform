@@ -14,7 +14,9 @@ from django.test import TestCase
 from django.utils.timezone import now
 from freezegun import freeze_time
 from opaque_keys.edx.locator import CourseLocator, BlockUsageLocator
+import pytz
 from track.event_transaction_utils import get_event_transaction_id, get_event_transaction_type
+import waffle.testutils
 
 from lms.djangoapps.grades.models import (
     BlockRecord,
@@ -212,7 +214,7 @@ class PersistentSubsectionGradeTest(GradesModelTestCase):
             "earned_graded": 6.0,
             "possible_graded": 8.0,
             "visible_blocks": self.block_records,
-            "first_attempted": now(),
+            "first_attempted": datetime(2000, 1, 1, 12, 30, 45, tzinfo=pytz.UTC),
         }
 
     def test_create(self):
@@ -262,9 +264,20 @@ class PersistentSubsectionGradeTest(GradesModelTestCase):
             self.assertEqual(created_grade.id, updated_grade.id)
             self.assertEqual(created_grade.earned_all, 6)
 
-    def test_update_or_create_attempted(self):
-        grade = PersistentSubsectionGrade.update_or_create_grade(**self.params)
-        self.assertIsInstance(grade.first_attempted, datetime)
+    @ddt.unpack
+    @ddt.data(
+        (True, datetime(2000, 1, 1, 12, 30, 45, tzinfo=pytz.UTC)),
+        (False, None),  # Use as now().  Freeze time needs this calculation to happen at test time.
+    )
+    @freeze_time(now())
+    def test_update_or_create_attempted(self, is_active, expected_first_attempted):
+        if expected_first_attempted is None:
+            expected_first_attempted=now()
+        with waffle.testutils.override_switch('grades_estimate_first_attempted', active=is_active):
+            grade = PersistentSubsectionGrade.update_or_create_grade(**self.params)
+            self.assertIsInstance(grade.first_attempted, datetime)
+            self.assertEqual(grade.first_attempted, expected_first_attempted)
+            grade = PersistentSubsectionGrade.update_or_create_grade(**self.params)
 
     def test_unattempted(self):
         self.params['first_attempted'] = None
