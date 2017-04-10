@@ -1523,9 +1523,10 @@ def group_configurations_list_handler(request, course_key_string):
 
             all_configurations = GroupConfiguration.get_all_content_groups(store, course)
             should_show_enrollment_track = False
-
+            group_schemes = []
             for config in all_configurations:
-                if config['scheme'] == 'enrollment_track':
+                group_schemes.append(config['scheme'])
+                if config['scheme'] == ENROLLMENT_SCHEME:
                     enrollment_track_configuration = config
                     should_show_enrollment_track = len(enrollment_track_configuration['groups']) > 1
 
@@ -1533,6 +1534,10 @@ def group_configurations_list_handler(request, course_key_string):
                     all_configurations.remove(config)
                     if should_show_enrollment_track:
                         all_configurations.insert(0, config)
+
+            # No Content groups
+            if len(all_configurations) == 0 or COHORT_SCHEME not in group_schemes:
+                all_configurations.append(GroupConfiguration.get_empty_user_partition(course, COHORT_SCHEME))
 
             return render_to_response('group_configurations.html', {
                 'context_course': course,
