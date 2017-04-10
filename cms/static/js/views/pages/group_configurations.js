@@ -6,7 +6,8 @@ function($, _, gettext, BasePage, GroupConfigurationsListView, ContentGroupListV
     'use strict';
     var GroupConfigurationsPage = BasePage.extend({
         initialize: function(options) {
-            var restrictEditing = false, i;
+            var restrictEditing = false,
+                i;
             this.COHORT_SCHEME = 'cohort';
             this.ENROLLMENT_SCHEME = 'enrollment_track';
 
@@ -37,7 +38,9 @@ function($, _, gettext, BasePage, GroupConfigurationsListView, ContentGroupListV
         },
 
         renderPage: function() {
-            var hash = this.getLocationHash(), i, currentClass;
+            var hash = this.getLocationHash(),
+                i,
+                currentClass;
             if (this.experimentsEnabled) {
                 this.$('.wrapper-groups.experiment-groups').append(this.experimentGroupsListView.render().el);
             }
@@ -66,7 +69,7 @@ function($, _, gettext, BasePage, GroupConfigurationsListView, ContentGroupListV
          */
         areContentConfigurationsDirty: function() {
             var i;
-            for (i = 0; i < this.allGroupConfigurations.length; i++){
+            for (i = 0; i < this.allGroupConfigurations.length; i++) {
                 if (this.allGroupConfigurations[i].isDirty()) {
                     return true;
                 }
