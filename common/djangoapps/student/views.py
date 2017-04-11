@@ -23,7 +23,7 @@ from django.contrib.auth.views import password_reset_confirm
 from django.contrib import messages
 from django.core.context_processors import csrf
 from django.core import mail
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.core.urlresolvers import reverse, NoReverseMatch, reverse_lazy
 from django.core.validators import validate_email, ValidationError
 from django.db import IntegrityError, transaction
@@ -2438,10 +2438,21 @@ def reactivation_email_for_user(user):
             "error": _('No inactive user with this e-mail exists'),
         })  # TODO: this should be status code 400  # pylint: disable=fixme
 
-    context = {
-        'name': user.profile.name,
-        'key': reg.activation_key,
-    }
+    try:
+        context = {
+            'name': user.profile.name,
+            'key': reg.activation_key,
+        }
+    except ObjectDoesNotExist:
+        log.error(
+            u'Unable to send reactivation email due to unavailable profile for the user "%s"',
+            user.username,
+            exc_info=True
+        )
+        return JsonResponse({
+            "success": False,
+            "error": _('Unable to send reactivation email')
+        })
 
     subject = render_to_string('emails/activation_email_subject.txt', context)
     subject = ''.join(subject.splitlines())
