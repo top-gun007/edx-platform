@@ -99,4 +99,4 @@ class CourseData(object):
                 self.course_key, self.version, self.edited_on, self.grading_policy_hash,
             )
         else:
-            return u'Course: course_key: {}. Structure not available.'.format(self.course_key)
+            return u'Course: course_key: {}, empty course structure'.format(self.course_key)

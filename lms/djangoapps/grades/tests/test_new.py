@@ -113,7 +113,8 @@ class TestCourseGradeFactory(GradeTestBase):
         self.assertEqual(access.error_code, 'not_visible_to_user')
 
         # with self.assertNoExceptionRaised: <- this isn't a real method, it's an implicit assumption
-        _ = CourseGradeFactory().create(self.request.user, invisible_course)
+        grade = CourseGradeFactory().create(self.request.user, invisible_course)
+        self.assertEqual(grade.percent, 0)
 
     @patch.dict(settings.FEATURES, {'PERSISTENT_GRADES_ENABLED_FOR_ALL_TESTS': False})
     @ddt.data(
