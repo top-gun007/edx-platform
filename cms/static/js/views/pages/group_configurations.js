@@ -20,7 +20,7 @@ function($, _, gettext, BasePage, GroupConfigurationsListView, ContentGroupListV
                 });
             }
 
-            this.allGroupConfigurations = options.allGroupConfigurations;
+            this.allGroupConfigurations = options.allGroupConfigurations || [];
             this.allGroupViewList = [];
             for (i = 0; i < this.allGroupConfigurations.length; i++) {
                 restrictEditing = false;
