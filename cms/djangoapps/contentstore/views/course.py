@@ -1537,7 +1537,7 @@ def group_configurations_list_handler(request, course_key_string):
 
             # No Content groups
             if len(all_configurations) == 0 or COHORT_SCHEME not in group_schemes:
-                all_configurations.append(GroupConfiguration.get_empty_user_partition(course, COHORT_SCHEME))
+                all_configurations.append(GroupConfiguration.get_or_create_content_group(store, course))
 
             return render_to_response('group_configurations.html', {
                 'context_course': course,

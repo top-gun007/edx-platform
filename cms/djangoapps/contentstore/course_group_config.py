@@ -8,6 +8,7 @@ from util.db import generate_int_id, MYSQL_MAX_INT
 
 from django.utils.translation import ugettext as _
 from contentstore.utils import reverse_usage_url
+from openedx.core.djangoapps.course_groups.partition_scheme import get_cohorted_user_partition
 from xmodule.partitions.partitions import UserPartition, MINIMUM_STATIC_PARTITION_ID
 from xmodule.partitions.partitions_service import get_all_partitions_for_course, create_enrollment_track_partition
 from xmodule.split_test_module import get_split_user_partitions
@@ -336,54 +337,32 @@ class GroupConfiguration(object):
 
         return content_group_configuration
 
-    # @staticmethod
-    # def update_all_partition_group_usage_info(store, course, configuration):
-        # usage_info = GroupConfiguration.
-
-    # TODO: Delete this code once removed from all dependent tests (astaubin)
-    # @staticmethod
-    # def get_or_create_content_group(store, course):
-    #     """
-    #     Returns the first user partition from the course which uses the
-    #     CohortPartitionScheme, or generates one if no such partition is
-    #     found.  The created partition is not saved to the course until
-    #     the client explicitly creates a group within the partition and
-    #     POSTs back.
-    #     """
-    #     content_group_configuration = get_cohorted_user_partition(course)
-    #     if content_group_configuration is None:
-    #         content_group_configuration = UserPartition(
-    #             id=generate_int_id(MINIMUM_GROUP_ID, MYSQL_MAX_INT, GroupConfiguration.get_used_ids(course)),
-    #             name=CONTENT_GROUP_CONFIGURATION_NAME,
-    #             description=CONTENT_GROUP_CONFIGURATION_DESCRIPTION,
-    #             groups=[],
-    #             scheme_id=COHORT_SCHEME
-    #         )
-    #         return content_group_configuration.to_json()
-    #
-    #     content_group_configuration = GroupConfiguration.update_content_group_usage_info(
-    #         store,
-    #         course,
-    #         content_group_configuration
-    #     )
-    #     return content_group_configuration
-
     @staticmethod
-    def get_empty_user_partition(course, scheme):
-        if scheme == ENROLLMENT_SCHEME:
-            enrollment_partition = create_enrollment_track_partition(course)
+    def get_or_create_content_group(store, course):
+        """
+        Returns the first user partition from the course which uses the
+        CohortPartitionScheme, or generates one if no such partition is
+        found.  The created partition is not saved to the course until
+        the client explicitly creates a group within the partition and
+        POSTs back.
+        """
+        content_group_configuration = get_cohorted_user_partition(course)
+        if content_group_configuration is None:
+            content_group_configuration = UserPartition(
+                id=generate_int_id(MINIMUM_GROUP_ID, MYSQL_MAX_INT, GroupConfiguration.get_used_ids(course)),
+                name=CONTENT_GROUP_CONFIGURATION_NAME,
+                description=CONTENT_GROUP_CONFIGURATION_DESCRIPTION,
+                groups=[],
+                scheme_id=COHORT_SCHEME
+            )
+            return content_group_configuration.to_json()
 
-            if enrollment_partition is not None:
-                return enrollment_partition.to_json()
-
-        empty_user_partition = UserPartition(
-            id=generate_int_id(MINIMUM_GROUP_ID, MYSQL_MAX_INT, GroupConfiguration.get_used_ids(course)),
-            name=CONTENT_GROUP_CONFIGURATION_NAME,
-            description=CONTENT_GROUP_CONFIGURATION_DESCRIPTION,
-            groups=[],
-            scheme_id=scheme
+        content_group_configuration = GroupConfiguration.update_content_group_usage_info(
+            store,
+            course,
+            content_group_configuration
         )
-        return empty_user_partition.to_json()
+        return content_group_configuration
 
     @staticmethod
     def get_all_content_groups(store, course):

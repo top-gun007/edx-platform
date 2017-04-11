@@ -11,18 +11,19 @@ define([
                 experimentGroupConfigurationsJson, {parse: true}
             ),
             allGroupConfigurations = [],
+            newGroupConfig,
             i;
 
         for (i = 0; i < allGroupConfigurationJson.length; i++) {
-            allGroupConfigurations.push(new GroupConfigurationModel(allGroupConfigurationJson[i],
-                {parse: true, canBeEmpty: true})
-            );
+            newGroupConfig = new GroupConfigurationModel(allGroupConfigurationJson[i],
+                {parse: true, canBeEmpty: true});
+            newGroupConfig.urlRoot = groupConfigurationUrl;
+            newGroupConfig.outlineUrl = courseOutlineUrl;
+            allGroupConfigurations.push(newGroupConfig);
         }
 
         experimentGroupConfigurations.url = groupConfigurationUrl;
         experimentGroupConfigurations.outlineUrl = courseOutlineUrl;
-        allGroupConfigurations.urlRoot = groupConfigurationUrl;
-        allGroupConfigurations.outlineUrl = courseOutlineUrl;
         new GroupConfigurationsPage({
             el: $('#content'),
             experimentsEnabled: experimentsEnabled,
