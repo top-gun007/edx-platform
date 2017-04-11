@@ -10,7 +10,6 @@ from student.views import (
 )
 from student.models import UserProfile, PendingEmailChange, Registration
 from third_party_auth.views import inactive_user_view
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.core import mail
 from django.contrib.auth.models import User
